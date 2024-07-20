@@ -1,0 +1,12 @@
+- make a src folder and put the typescript file in
+
+- "tsc --init"
+
+- copy code from "tsconfig.json"
+
+- then to compile run "tsc"
+
+- output will be in the dist folder as filename.js
+
+
+npx webpack --config webpack.config.js

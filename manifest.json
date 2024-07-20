@@ -1,0 +1,56 @@
+{
+  "name": "Task Tackler",
+  "version": "2.5",
+  "description": "-=-=- fixed some firebase database bugs -=-=-",
+  "content_scripts": [
+    {
+      "matches": ["https://www.sparxmaths.uk/*"],
+      "js": ["dist/sparx.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://www.sparxmaths.uk/*"],
+      "js": ["dist/sparxSolverBundled.js"],
+      "run_at": "document_end",
+      "type": "module"
+    },
+    {
+      "matches": ["https://app.bedrocklearning.org/*"],
+      "js": ["dist/bedrock.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://my.educake.co.uk/*"],
+      "js": ["dist/educake.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://app.senecalearning.com/*"],
+      "js": ["dist/seneca.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://www.knowitallninja.com/*"],
+      "js": ["dist/knowitallninja.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "permissions": ["storage"],
+  "icons": { "48": "pfp.png" },
+  "browser_action": {
+    "default_icon": {
+      "48": "pfp.png"
+    }
+  },
+  "host_permissions": ["https://www.sparxmaths.uk/*"],
+  "web_accessible_resources": [
+    {
+      "resources": ["compressedData.json"],
+      "matches": ["https://www.sparxmaths.uk/*"]
+    }
+  ],
+  "manifest_version": 3
+}
