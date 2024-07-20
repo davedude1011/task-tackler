@@ -1,0 +1,6 @@
+git init
+git remote add origin https://github.com/davedude1011/task-tackler.git
+git checkout -b main
+git add .
+git commit -m "update"
+git push -u origin main --force
