@@ -1,7 +1,7 @@
 {
   "name": "Task Tackler",
-  "version": "2.5",
-  "description": "-=-=- fixed some firebase database bugs -=-=-",
+  "version": "2.6",
+  "description": "-=-=- updated ui, removed buggy text -=-=-",
   "content_scripts": [
     {
       "matches": ["https://www.sparxmaths.uk/*"],
