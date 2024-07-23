@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app"
-import { get, getDatabase, ref, set } from "firebase/database";
+import { get, getDatabase, ref, push } from "firebase/database";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBcy5vGOIDu4CLE08wI5uFwc9Andup9z3U",
@@ -146,28 +146,45 @@ function setQuestionAnswerLocalStorage(question: string, setAnswer: (answer: str
 // database stuff:
 
 function setQuestionAnswerDatabase(question: string, setAnswer: (answer: string) => void) {
-    get(ref(database, "questionData")).then((snapshot) => {
-        const questionData = snapshot.val()
-        if (questionData) {
-            for (let i = 0; i < questionData.length; i++) {
-                if (removeBracketedContent(questionData[i].question) == question) {
-                    setAnswer(questionData[i].answer)
-                    break
-                }
-                console.log(questionData[i])
-            }
+    const questionData = JSON.parse(localStorage.getItem("localStorageDatabaseSnapshot") || "[]")
+    for (let i = 0; i < questionData.length; i++) {
+        if (removeBracketedContent(questionData[i].question) == question) {
+            setAnswer(questionData[i].answer)
+            break
         }
-    })
-    .catch((error) => {
-        console.log(error)
-    })
+        console.log(questionData[i])
+    }
     return question || undefined
 }
 
+function updateLocalStorageDatabase() {
+    let lastUpdateDate = localStorage.getItem("lastUpdateDate")
+    if ((lastUpdateDate && Date.now() - parseInt(lastUpdateDate) > 43200000) || !lastUpdateDate) {
+        localStorage.setItem("lastUpdateDate", Date.now().toString())
+
+        get(ref(database, "questionData")).then((snapshot) => {
+            const questionData = snapshot.val()
+            if (questionData) {
+                localStorage.setItem("localStorageDatabaseSnapshot", JSON.stringify(questionData))
+            }
+        })
+        .catch((error) => {
+            console.log(error)
+        })
+    }
+}
 
 function saveQuestionData(questionHTML: string, answerHTML: string) {
     console.log("Sparx Saving Data")
-    get(ref(database, "questionData")).then((snapshot) => {
+
+    push(ref(database, "questionData"), {
+        question: questionHTML,
+        answer: answerHTML,
+    })
+}
+
+/*
+get(ref(database, "questionData")).then((snapshot) => {
         if (snapshot.exists()) {
             let questionData = snapshot.val().filter((element: any) => (element.question != questionHTML) && (removeBracketedContent(element.question) != removeBracketedContent(questionHTML))) || [];
 
@@ -189,20 +206,21 @@ function saveQuestionData(questionHTML: string, answerHTML: string) {
                 });
         }
     })
-}
+*/
+
 function handleFirebaseSaving() {
     const submitButton: any = document.querySelectorAll("[class*='_ButtonBase_']")
     for (let i = 0; i < submitButton.length; i++) {
-        if (submitButton[i].textContent == "Submit answer" && !submitButton[i].classList.contains("firebase-event-listener-added")) {
+        if (submitButton[i].textContent == "Submit answer" && submitButton[i].getAttribute("firebase-event-listener-added") != "true") {
             submitButton[i].addEventListener("click", function() {
                 let questionHTML = localStorage.getItem("lastQuestionHTML") || "ERROR ACCESSING LOCALSTORAGE LASTQUESTIONHTML"
                 let answerHTML = document.querySelector("[class*='_QuestionWrapper_']")?.innerHTML || "ERROR FINDING _QuestionWrapper_"
     
                 saveQuestionData(questionHTML, answerHTML)
             })
-            submitButton[i].classList.add("firebase-event-listener-added")
+            submitButton[i].setAttribute("firebase-event-listener-added", "true")
         }
-        if (submitButton[i].textContent == "Answer" && !submitButton[i].classList.contains("answer-event-listener-added")) {
+        if (submitButton[i].textContent == "Answer" && submitButton[i].getAttribute("firebase-event-listener-added") != "true") {
             submitButton[i].addEventListener("click", function() {
                 if (!document.querySelector("[class*='_QuestionWrapper_']")?.innerHTML.includes("Expert Verified Solution") && !document.querySelector("[class*='_QuestionWrapper_']")?.innerHTML.includes("Gauth AI Solution")) {
                     if (solveButtonType == "Solution") {
@@ -210,7 +228,7 @@ function handleFirebaseSaving() {
                     }
                 }
             })
-            submitButton[i].classList.add("answer-event-listener-added")
+            submitButton[i].setAttribute("firebase-event-listener-added", "true")
         }
     }
 }
@@ -247,6 +265,7 @@ function mainLoop() {
             }
         }
         handleFirebaseSaving()
+        updateLocalStorageDatabase()
     })();
 }
 setInterval(mainLoop, 10);

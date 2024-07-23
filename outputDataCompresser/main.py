@@ -1,5 +1,21 @@
 import json
-import re
+from bs4 import BeautifulSoup
+
+def removeKatexHtmlElements(input_html):
+    soup = BeautifulSoup(input_html, "lxml")
+    # Remove all elements with the class 'katex-html'
+    for element in soup.select(".katex-html"):
+        element.decompose()
+    return str(soup)
+
+def removeAttributesExceptSrc(input_html):
+    soup = BeautifulSoup(input_html, "lxml")
+    for tag in soup.find_all(True):
+        # List all attributes that are not 'src'
+        attrs = {key: value for key, value in tag.attrs.items() if key != 'src'}
+        for attr in attrs:
+            del tag[attr]
+    return str(soup)
 
 def removeBracketedContent(input_string):
     output = []
@@ -15,27 +31,22 @@ def removeBracketedContent(input_string):
     
     return ''.join(output).replace("&ZeroWidthSpace;", "")
 
-def removeAttributesExceptSrc(input_string):
-    # Define a regex pattern to match any attribute except 'src'
-    pattern = r'\b(?!src\b)[a-zA-Z-]+\s*=\s*"(.*?)"'
-    
-    # Use re.sub to remove these attributes from the input string
-    output = re.sub(pattern, '', input_string)
-    
-    # Clean up any remaining unwanted characters or extra spaces
-    output = re.sub(r'\s{2,}', ' ', output).strip()
-    
-    return output
-
-with open("./outputData.json", "r") as inputDataRaw:
-    inputData = json.load(inputDataRaw)
+def process_data(input_data):
     compressedData = []
-
-    for dataBlock in inputData:
+    for dataBlock in input_data:
+        # Assuming the question field does not require HTML manipulation
         dataBlock["question"] = removeBracketedContent(dataBlock["question"])
+        # Apply HTML removal to the answer field
+        dataBlock["answer"] = removeKatexHtmlElements(dataBlock["answer"])
         dataBlock["answer"] = removeAttributesExceptSrc(dataBlock["answer"])
         if ("Want a more accurate answer?" not in dataBlock["answer"] and "gpt-mask" not in dataBlock["answer"]):
             compressedData.append(dataBlock)
+    return compressedData
+    
 
-    with open("./outputDataCompresser/compressedData.json", "w") as compressedDataRaw:
+# Example of reading and writing data
+with open("./outputData.json", "r") as inputDataRaw:
+    inputData = json.load(inputDataRaw)
+    compressedData = process_data(inputData)
+    with open("./compressedData.json", "w") as compressedDataRaw:
         json.dump(compressedData, compressedDataRaw, indent=4)
